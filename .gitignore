@@ -2,3 +2,21 @@
 /lib
 /test/test.styl
 /test/test.scss
+
+.DS_Store
+/dist/
+/.idea/
+/.vscode/
+
+.npm
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+firebase-debug.log*
+
+# lib folder
+lib/**
