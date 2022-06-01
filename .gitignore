@@ -19,4 +19,4 @@ yarn-error.log*
 firebase-debug.log*
 
 # lib folder
-lib/**
+/lib/**
