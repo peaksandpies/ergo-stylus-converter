@@ -570,7 +570,7 @@ function visitTernary({ cond, lineno }) {
   return before + visitBinOp(cond)
 }
 
-function visitBinOp({ op, left, right }) {
+function visitBinOp({ op, left, right }) { 
   binOpLength++
   function visitNegate(op) {
     if (!isNegate || (op !== '==' && op !== '!=')) {
@@ -592,9 +592,15 @@ function visitBinOp({ op, left, right }) {
   const isExp = rightExp.__type === 'Expression'
   const expText = isExp ? `(${visitNode(rightExp)})` : visitNode(rightExp)
   const symbol = OPEARTION_MAP[op] || visitNegate(op)
-  const endSymbol = op === 'is defined' ? '!default;' : ''
+  const endSymbol = op === 'is defined' ? '!default;' : ''  
 
   binOpLength--
+
+  if (typeof visitNode(leftExp) === 'string' && visitNode(leftExp).includes('%s')) {
+    const variable = /\d+[(px)(em)%]/.test(expText) ? `${expText}` : `#{${expText}}`
+    return visitNode(leftExp).replace('%s', variable).replace(/\'/g, '')
+  }
+
   return endSymbol
     ? `${trimSemicolon(visitNode(leftExp)).trim()} ${endSymbol}`
     : `${visitNode(leftExp)} ${symbol} ${expText}`
@@ -786,7 +792,7 @@ export default function visitor(ast, options, globalVariableList, globalMixinLis
   GLOBAL_MIXIN_NAME_LIST = globalMixinList
   GLOBAL_VARIABLE_NAME_LIST = globalVariableList
   let result = visitNodes(ast.nodes) || ''
-  result = '@use "config";\n@use "node_modules/breakpoint-slicer" as bs with ($slices: config.$slices);\n' + result
+  result = '@use \'config\';\n@use \'node_modules/breakpoint-slicer\' as bs with ($slices: config.$slices);\n' + result
   const indentation = ' '.repeat(options.indentVueStyleBlock)
   result = result.replace(/(.*\S.*)/g, `${indentation}$1`);
   result = result.replace(/(.*)>>>(.*)/g, `$1/deep/$2`)
