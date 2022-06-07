@@ -35,6 +35,7 @@ let isArguments = false
 let isExpression = false
 let isCallParams = false
 let isIfExpression = false
+let isPropertyTransition = false
 
 let isBlock = false
 let ifLength = 0
@@ -210,12 +211,18 @@ function visitImport(node) {
   
   // let result = text.replace(/\.styl$/g, '.scss')
   let result = text.replace(/\.styl$/g, '')
+  let namespaceSetter = ''
 
   if (result.includes('styles/')) {
     result = result.split('styles/')[1]
   }
+
+  // importing variables without a namespace (*)
+  if (result.includes('variables')) {
+    namespaceSetter = ' as *'
+  }
   
-  return `${before}${quote}${result}${quote};`
+  return `${before}${quote}${result}${quote}${namespaceSetter};`
 }
 
 function visitSelector(node) {
@@ -283,6 +290,7 @@ function visitLiteral(node) {
 }
 
 function visitProperty({ expr, lineno, segments }) {
+  isPropertyTransition = false
   const suffix = ';'
   const before = handleLinenoAndIndentation({ lineno })
   oldLineno = lineno
@@ -301,11 +309,16 @@ function visitProperty({ expr, lineno, segments }) {
         const beforeExpText = before + trimFirst(visitExpression(expr))
         const expText = `${before}${segmentsText}: $${ident.name};`
         isProperty = false
-        PROPERTY_LIST.unshift({ prop: segmentsText, value: '$' + ident.name })
+        PROPERTY_LIST.unshift({ prop: segmentsText, value: '$' + ident.name })        
         return beforeExpText + expText
       }
     }
+  } 
+  
+  if (segmentsText === 'transition') {
+    isPropertyTransition = true
   }
+
   const expText = visitExpression(expr)
   PROPERTY_LIST.unshift({ prop: segmentsText, value: expText })
   isProperty = false
@@ -323,7 +336,10 @@ function visitIdent({ val, name, rest, mixin, property }) {
         const propertyVal = PROPERTY_LIST.find(item => item.prop === name)
         if (propertyVal) {
           identLength--
-          return propertyVal.value
+          // Do not return the value if the property is "transition"
+          // Instead, return the value type, needed for the right declaration of transition
+          return isPropertyTransition ? propertyVal.prop : propertyVal.value
+          // return propertyVal.value
         }
       }
     }
@@ -416,7 +432,7 @@ function visitExpression(node) {
     return (before && space) ? trimSemicolon(before + getIndentation() + space + result, ';') : result
   }
   let symbol = ''
-  if (nodesIndex + 1 === nodesLength) symbol = returnSymbol
+  if (nodesIndex + 1 === nodesLength) symbol = returnSymbol  
   return before + getIndentation() + symbol + result
 }
 
@@ -449,29 +465,6 @@ function visitCall({ name, args, lineno, block }) {
   // }
 
   return `${before + name}(${argsText})${blockText};`
-}
-
-function migrateRuptureToBreakpointSlicer(word) {
-  switch(word) {
-    case 'below': {
-      return 'bs.to'
-    }
-    case 'above': {
-      return 'bs.from'
-    }
-    case 'to-width': {
-      return 'bs.to'
-    }
-    case 'from-width': {
-      return 'bs.from'
-    }
-    case 'between': {
-      return `bs.${word}`
-    }
-    default: {
-      return 'bs.to'
-    }
-  }
 }
 
 function visitArguments(node) {
