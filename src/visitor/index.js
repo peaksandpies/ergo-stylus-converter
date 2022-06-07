@@ -207,7 +207,14 @@ function visitImport(node) {
     text += node.val
     if (!quote && node.quote) quote = node.quote
   })
-  const result = text.replace(/\.styl$/g, '.scss')
+  
+  // let result = text.replace(/\.styl$/g, '.scss')
+  let result = text.replace(/\.styl$/g, '')
+
+  if (result.includes('styles/')) {
+    result = result.split('styles/')[1]
+  }
+  
   return `${before}${quote}${result}${quote};`
 }
 
@@ -430,16 +437,16 @@ function visitCall({ name, args, lineno, block }) {
   callName = ''
   isCall = false
 
-  if (['below', 'above', 'from-width', 'to-width', 'between'].includes(name)) {
-    name = migrateRuptureToBreakpointSlicer(name)
+  if (['below', 'above', 'between'].includes(name)) {
+    name = `bs.${name}`
   }
 
-  const ruptureScaleNamesSingleQ = ['\'xxs\'', '\'xs\'', '\'s\'', '\'m\'', '\'l\'', '\'xl\'', '\'xxl\'']
-  const ruptureScaleNamesDoubleQ = ['\"xxs\"', '\"xs\"', '\"s\"', '\"m\"', '\"l\"', '\"xl\"', '\"xxl\"']
+  // const ruptureScaleNamesSingleQ = ['\'xxs\'', '\'xs\'', '\'s\'', '\'m\'', '\'l\'', '\'xl\'', '\'xxl\'']
+  // const ruptureScaleNamesDoubleQ = ['\"xxs\"', '\"xs\"', '\"s\"', '\"m\"', '\"l\"', '\"xl\"', '\"xxl\"']
 
-  if(ruptureScaleNamesSingleQ.includes(argsText) || ruptureScaleNamesDoubleQ.includes(argsText)) {
-    argsText = argsText.replace(/[\'\"]/g, '')
-  }
+  // if(ruptureScaleNamesSingleQ.includes(argsText) || ruptureScaleNamesDoubleQ.includes(argsText)) {
+  //   argsText = argsText.replace(/[\'\"]/g, '')
+  // }
 
   return `${before + name}(${argsText})${blockText};`
 }
@@ -792,7 +799,7 @@ export default function visitor(ast, options, globalVariableList, globalMixinLis
   GLOBAL_MIXIN_NAME_LIST = globalMixinList
   GLOBAL_VARIABLE_NAME_LIST = globalVariableList
   let result = visitNodes(ast.nodes) || ''
-  result = '@use \'config\';\n@use \'node_modules/breakpoint-slicer\' as bs with ($slices: config.$slices);\n' + result
+  result = `@use \'bs\';\n${result.substring(0, 4) === '@use' ? '' : '\n'}` + result
   const indentation = ' '.repeat(options.indentVueStyleBlock)
   result = result.replace(/(.*\S.*)/g, `${indentation}$1`);
   result = result.replace(/(.*)>>>(.*)/g, `$1/deep/$2`)
