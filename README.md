@@ -9,9 +9,11 @@ A fork of [Stylus-converter](https://github.com/txs1992/stylus-converter), modif
 
 > npm i -g stylus-converter
 
-2. Clone this repo to a local folder of your choosing
+2. Clone this repo to a local folder of your choosing and make it your cd
 
-> git clone git@github.com:peaksandpies/ergo-stylus-converter.git
+> git clone git@github.com:peaksandpies/ergo-stylus-converter.git  
+> 
+> cd "your cool folder"
 
 3. Install the dependencies
 
